@@ -1,0 +1,59 @@
+classDiagram
+	class ERC721URIStorage
+	class Event
+
+	class NFTLabStore
+	NFTLabStore : -StorageMap~UnsignedBigInteger, NFTLab~ nfts
+	NFTLabStore : -StorageMap~String, UnsignedBigInteger~ hashToId
+	NFTLabStore : -StorageMap<UnsignedBigInteger, StorageLinkedList<NFTTransaction>> history
+
+	NFTLabStore : +NFTLabStore(String name, String symbol)
+	NFTLabStore : +mint(Contract artist, BigInteger artistId, String hash, String timestamp) BigInteger
+	NFTLabStore : +transfer(BigInteger tokenId, Contract seller, BigInteger sellerId, Contract buyer, BigInteger buyerId, String price, String timestamp) boolean
+	NFTLabStore : getTokenId(String hash) BigInteger
+	NFTLabStore : +getHistory(BigInteger tokenId) StorageLinkedList~NFTTransaction~
+	NFTLabStore : +getNFTByHash(String hash) NFTLab
+	NFTLabStore : +getNFTById(BigInteger tokenId) NFTLab
+	NFTLabStore : #baseURI() String
+	NFTLabStore : -onlyOwner()
+
+  NFTLabStore --|> ERC721URIStorage
+	NFTLabStore ..> NFTLab
+	NFTLabStore ..> NFTTransaction
+
+	class NFTLab
+	NFTLab : -Contract artist
+	NFTLab : -BigInteger artistId
+	NFTLab : -String hash
+	NFTLab : -String timestamp
+	NFTLab : +NFTLab(Contract artist, BigInteger artistId, String hash, String timestamp)
+	NFTLab : +equals(Object o) boolean
+
+	class NFTTransaction
+	NFTTransaction : -BigInteger tokenId
+	NFTTransaction : -Contract seller
+	NFTTransaction : -BigInteger sellerId
+	NFTTransaction : -Contract buyer
+	NFTTransaction : -BigInteger buyerId
+	NFTTransaction : -String price
+	NFTTransaction : -String timestamp
+	NFTTransaction : +NFTTransaction(BigInteger tokenId, Contract seller, BigInteger sellerId, Contract buyer, BigInteger buyerId, String price, String timestamp)
+	NFTTransaction : +equals(Object o) boolean
+
+	class Minted
+	Minted : +Contract artist
+	Minted : +String hash
+	Minted : +String timestamp
+	Minted : +Minted(Contract artist, String hash, String timestamp)
+
+	Minted  --|> Event
+
+	class Transferred
+	Transferred : +BigInteger tokenId
+	Transferred : +Contract seller
+	Transferred : +Contract buyer
+	Transferred : +String price
+	Transferred : +String timestamp
+	Transferred : +Transferred(BigInteger tokenId, Contract seller, Contract buyer, String price, String timestamp)
+	
+	Transferred  --|> Event

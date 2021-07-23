@@ -1,4 +1,4 @@
-name: Build smart contract for Hotmoka 
+name: Build
 
 on:
   push:
@@ -61,7 +61,7 @@ jobs:
           path: './hotmoka'
           
       - name: Install Hotmoka
-        run: mvn install -f ./hotmoka/pom.xml --projects io-hotmoka-takamaka
+        run: mvn install -DskipTests=true -f ./hotmoka/pom.xml --projects io-hotmoka-takamaka
         
       - name: Package
         run: mvn clean package -DskipTests=true

@@ -1,19 +1,16 @@
 package io.nfteam.nftlab.nftlabmarketplace;
 
 import io.takamaka.code.lang.PayableContract;
-import io.takamaka.code.math.UnsignedBigInteger;
+import io.takamaka.code.lang.Storage;
+import java.math.BigInteger;
 
-public class Trade {
+public class Trade extends Storage {
     public PayableContract poster;
-    public UnsignedBigInteger item;
-    public UnsignedBigInteger price;
+    public BigInteger item;
+    public BigInteger price;
     public Status status;
 
-    public Trade(
-            PayableContract poster,
-            UnsignedBigInteger item,
-            UnsignedBigInteger price,
-            Status status) {
+    public Trade(PayableContract poster, BigInteger item, BigInteger price, Status status) {
         this.poster = poster;
         this.item = item;
         this.price = price;

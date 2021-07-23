@@ -57,112 +57,12 @@ La seguente repository contiene lo smart contract per Hotmoka per la gestione de
 
 In questo modo si permetterà a maven di accedere alla repository maven di github.
 
-3. Eseguire i seguenti comandi per installare Hotmoka 1.0.0:
+3. Eseguire i seguenti comandi per installare Hotmoka 1.0.0 e le dipendenze necessarie alla compilazione del progetto 
+   all'interno della cartella del progetto stesso:
 
 ```bash
 $ git clone https://github.com/Hotmoka/hotmoka.git
 $ cd hotmoka
 $ git checkout 1.0.0
-$ mvn install
+$ cd ..; mvn install -f hotmoka/pom.xml --projects io-hotmoka-takamaka
 ```
-
-## Organizzazione della repository
-
-```bash
-├── gameteED25519.keys
-├── gameteQTesla.keys
-├── gameteSHA256DSA.keys
-├── LICENSE
-├── pom.xml
-├── README.md
-└── src
-	├── main
-	│   ├── java
-	│   │   ├── io
-	│   │   │   └── nfteam
-	│   │   │       └── nftlab
-	│   │   │           └── nftlabstore
-	│   │   │               ├── NFTLab.java
-	│   │   │               ├── NFTLabStore.java
-	│   │   │               └── NFTTransaction.java
-	│   │   └── module-info.java
-	│   └── resources
-	└── test
-		└── java
-			└── io
-				└── nfteam
-					└── nftlab
-						└── nftlabstore
-							├── NFTLabStoreTest.java
-							├── NFTLabTest.java
-							├── NFTTransactionTest.java
-							└── TakamakaTest.java
-
-```
-
-### Package io.nfteam.nftlab
-
-![Class diagram](./docs/images/classdiagram.svg)
-
-#### NFTLabStore
-
-##### Costruttori
-
-- **NFTLabStore(String name, String symbol):** costruisce il contratto assegnando un nome ed un simbolo per il NFT.
-
-##### Eventi
-
-- **Minted**: evento che segnala la creazione di un nuovo NFT.
-- **Transferred**: evento che segnala il trasferimento di un NFT da un wallet ad un altro.
-
-##### Metodi
-
-- **mint(Contract artist, BigInteger artistId, String hash, String timestamp):** permette la creazione di un nuovo NFT
-- **View:** false
-- **transfer(BigInteger tokenId, Contract seller, BigInteger sellerId, Contract buyer, BigInteger buyerId, String price, String timestamp):** permette di trasferire un NFT da un wallet ad un altro
-- **View:** false
-- **getTokenId(String hash) BigInteger:** permette di ottenere l'id di un NFT a partire dal suo hash
-- **getHistory(BigInteger tokenId) StorageLinkedList\<NFTTransaction\>:** permette di ottenere la storia delle transazioni di un NFT a partire dal suo ID
-- **View:** true
-- **getNFTByHash(String hash) NFTLab:** permette di ottenere un NFT a partire dal suo hash
-- **View:** true
-- **getNFTById(BigInteger id) NFTLab:** permette di ottenere un NFT a partire dal suo id
-- **View:** true
-- **onlyOwner:** permette l'esecuzione del metodo solamente al proprietario del contratto
-
-#### NFTLab
-
-La classe NFTLab consiste in un NFT.
-
-#### NFTTransaction
-
-La classe NFTTransaction consiste in una transazione di un NFT.
-
-### Test
-
-Tutti i test sono stati implementati attraverso la libreria **JUnit5**.
-
-Per aiutare la scrittura dei test in Takamaka è stata utilizzata la classe TakamakaTest, la quale ha il compito di creare un nodo temporaneo e interagire con la blockchain Hotmoka attraverso i seguenti metodi:
-
-* **addJarStoreInitialTransaction**
-* **addJarStoreTransaction**
-* **addConstructorCallTransaction**
-* **addInstanceMethodCallTransaction**
-* **addStaticMethodCallTransaction**
-* **runInstanceMethodCallTransaction**
-* **runStaticMethodCallTransaction**
-* **postJarStoreTransaction**
-* **postInstanceMethodCallTransaction**
-* **postConstructorCallTransaction**
-
-I file ***.keys** che si possono trovare nella root del progetto servono per accedere alla blockchain temporanea.
-
-## Continuous Integration
-
-### Build
-
-Viene eseguita dalla action presente nel file **build.yml** ad ogni push nel **main** o nel **develop** e ha il compito di compilare e eseguire i test.
-
-### Publish to github packages
-
-Viene eseguita dalla action presente nel file **publish-to-github-packages.yml** ad ogni creazione di una nuova release e ha il compito di pubblicare l'artefatto maven nella repository maven dell'organizzazione NFT-Lab ([https://github.com/orgs/NFT-Lab/packages](https://github.com/orgs/NFT-Lab/packages)).

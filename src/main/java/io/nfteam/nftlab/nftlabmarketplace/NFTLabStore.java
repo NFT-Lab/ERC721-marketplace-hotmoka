@@ -60,6 +60,11 @@ public class NFTLabStore extends ERC721URIStorage {
         _recordHistory(from, to, tokenId);
     }
 
+    @FromContract
+    public void approve(Contract to, BigInteger tokenID) {
+        super.approve(to, new UnsignedBigInteger(tokenID));
+    }
+
     @View
     public StorageLinkedList<NFTTransaction> getHistory(BigInteger tokenId) {
         UnsignedBigInteger tokenIdUBI = new UnsignedBigInteger(tokenId);

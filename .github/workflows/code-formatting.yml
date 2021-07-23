@@ -1,4 +1,4 @@
-name: Build smart contract for Hotmoka 
+name: Check code formatting
 
 on:
   push:

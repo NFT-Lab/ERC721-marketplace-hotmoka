@@ -714,4 +714,253 @@ class NFTLabStoreTest extends TakamakaTest {
 
         assertEquals(("https://cloudflare-ipfs.com/ipfs/" + metadataCid), actualURI.toString());
     }
+
+    @Test
+    void totalSupply()
+            throws TransactionException, TransactionRejectedException, CodeExecutionException,
+                    SignatureException, InvalidKeyException {
+        StringValue cid = new StringValue("QmeK3GCfbMzRp3FW3tWZCg5WVZKM52XZrk6WCTLXWwALbq");
+        StringValue metadataCid = new StringValue("QmeK3GCfbMzRp3FW3tWZCg5WVZKM52XZrk6WCTLXWwALbq");
+
+        BooleanValue isImage = new BooleanValue(true);
+        BooleanValue isMusic = new BooleanValue(false);
+        BooleanValue isVideo = new BooleanValue(false);
+
+        BigIntegerValue totalSupply =
+                (BigIntegerValue)
+                        addInstanceMethodCallTransaction(
+                                creator_prv_key,
+                                creator,
+                                _10_000_000,
+                                panarea(1),
+                                classpath,
+                                new NonVoidMethodSignature(
+                                        NFTLabStore, "totalSupply", ClassType.BIG_INTEGER),
+                                nftLabStore);
+
+        assertEquals(BigInteger.ZERO, totalSupply.value);
+
+        BigIntegerValue tokenId =
+                (BigIntegerValue)
+                        addInstanceMethodCallTransaction(
+                                creator_prv_key,
+                                creator,
+                                _10_000_000,
+                                panarea(1),
+                                classpath,
+                                new NonVoidMethodSignature(
+                                        NFTLabStore,
+                                        "mint",
+                                        ClassType.BIG_INTEGER,
+                                        ClassType.CONTRACT,
+                                        ClassType.STRING,
+                                        ClassType.STRING,
+                                        BasicTypes.BOOLEAN,
+                                        BasicTypes.BOOLEAN,
+                                        BasicTypes.BOOLEAN),
+                                nftLabStore,
+                                account(2),
+                                cid,
+                                metadataCid,
+                                isImage,
+                                isMusic,
+                                isVideo);
+
+        BigIntegerValue totalSupply_after =
+                (BigIntegerValue)
+                        addInstanceMethodCallTransaction(
+                                creator_prv_key,
+                                creator,
+                                _10_000_000,
+                                panarea(1),
+                                classpath,
+                                new NonVoidMethodSignature(
+                                        NFTLabStore, "totalSupply", ClassType.BIG_INTEGER),
+                                nftLabStore);
+
+        assertEquals(BigInteger.ONE, totalSupply_after.value);
+    }
+
+    @Test
+    void tokenOfOwnerByIndex()
+            throws TransactionException, TransactionRejectedException, CodeExecutionException,
+                    SignatureException, InvalidKeyException {
+        StringValue cid = new StringValue("QmeK3GCfbMzRp3FW3tWZCg5WVZKM52XZrk6WCTLXWwALbq");
+        StringValue metadataCid = new StringValue("QmeK3GCfbMzRp3FW3tWZCg5WVZKM52XZrk6WCTLXWwALbq");
+
+        BooleanValue isImage = new BooleanValue(true);
+        BooleanValue isMusic = new BooleanValue(false);
+        BooleanValue isVideo = new BooleanValue(false);
+
+        BigIntegerValue tokenBefore =
+                (BigIntegerValue)
+                        addInstanceMethodCallTransaction(
+                                creator_prv_key,
+                                creator,
+                                _10_000_000,
+                                panarea(1),
+                                classpath,
+                                new NonVoidMethodSignature(
+                                        NFTLabStore,
+                                        "tokenOfOwnerByIndex",
+                                        ClassType.BIG_INTEGER,
+                                        ClassType.CONTRACT,
+                                        ClassType.BIG_INTEGER),
+                                nftLabStore,
+                                account(2),
+                                BigIntegerValue.of("1", ClassType.BIG_INTEGER));
+
+        assertEquals(BigInteger.ZERO, tokenBefore.value);
+
+        BigIntegerValue tokenId =
+                (BigIntegerValue)
+                        addInstanceMethodCallTransaction(
+                                creator_prv_key,
+                                creator,
+                                _10_000_000,
+                                panarea(1),
+                                classpath,
+                                new NonVoidMethodSignature(
+                                        NFTLabStore,
+                                        "mint",
+                                        ClassType.BIG_INTEGER,
+                                        ClassType.CONTRACT,
+                                        ClassType.STRING,
+                                        ClassType.STRING,
+                                        BasicTypes.BOOLEAN,
+                                        BasicTypes.BOOLEAN,
+                                        BasicTypes.BOOLEAN),
+                                nftLabStore,
+                                account(2),
+                                cid,
+                                metadataCid,
+                                isImage,
+                                isMusic,
+                                isVideo);
+
+        BigIntegerValue tokenAfter =
+                (BigIntegerValue)
+                        addInstanceMethodCallTransaction(
+                                creator_prv_key,
+                                creator,
+                                _10_000_000,
+                                panarea(1),
+                                classpath,
+                                new NonVoidMethodSignature(
+                                        NFTLabStore,
+                                        "tokenOfOwnerByIndex",
+                                        ClassType.BIG_INTEGER,
+                                        ClassType.CONTRACT,
+                                        ClassType.BIG_INTEGER),
+                                nftLabStore,
+                                account(2),
+                                BigIntegerValue.of("1", ClassType.BIG_INTEGER));
+
+        assertEquals(BigInteger.ONE, tokenAfter.value);
+    }
+
+    @Test
+    void tokenByIndex()
+            throws TransactionException, TransactionRejectedException, CodeExecutionException,
+                    SignatureException, InvalidKeyException {
+        StringValue cid = new StringValue("QmeK3GCfbMzRp3FW3tWZCg5WVZKM52XZrk6WCTLXWwALbq");
+        StringValue metadataCid = new StringValue("QmeK3GCfbMzRp3FW3tWZCg5WVZKM52XZrk6WCTLXWwALbq");
+
+        BooleanValue isImage = new BooleanValue(true);
+        BooleanValue isMusic = new BooleanValue(false);
+        BooleanValue isVideo = new BooleanValue(false);
+
+        throwsTransactionExceptionWithCause(
+                Constants.REQUIREMENT_VIOLATION_EXCEPTION_NAME,
+                () ->
+                        addInstanceMethodCallTransaction(
+                                creator_prv_key,
+                                creator,
+                                _10_000_000,
+                                panarea(1),
+                                classpath,
+                                new NonVoidMethodSignature(
+                                        NFTLabStore,
+                                        "tokenByIndex",
+                                        new ClassType("io.nfteam.nftlab.nftlabmarketplace.NFTLab"),
+                                        ClassType.BIG_INTEGER),
+                                nftLabStore,
+                                BigIntegerValue.of("1", ClassType.BIG_INTEGER)));
+
+        BigIntegerValue tokenId =
+                (BigIntegerValue)
+                        addInstanceMethodCallTransaction(
+                                creator_prv_key,
+                                creator,
+                                _10_000_000,
+                                panarea(1),
+                                classpath,
+                                new NonVoidMethodSignature(
+                                        NFTLabStore,
+                                        "mint",
+                                        ClassType.BIG_INTEGER,
+                                        ClassType.CONTRACT,
+                                        ClassType.STRING,
+                                        ClassType.STRING,
+                                        BasicTypes.BOOLEAN,
+                                        BasicTypes.BOOLEAN,
+                                        BasicTypes.BOOLEAN),
+                                nftLabStore,
+                                account(2),
+                                cid,
+                                metadataCid,
+                                isImage,
+                                isMusic,
+                                isVideo);
+
+        BigIntegerValue tokenAfter =
+                (BigIntegerValue)
+                        addInstanceMethodCallTransaction(
+                                creator_prv_key,
+                                creator,
+                                _10_000_000,
+                                panarea(1),
+                                classpath,
+                                new NonVoidMethodSignature(
+                                        NFTLabStore,
+                                        "tokenOfOwnerByIndex",
+                                        ClassType.BIG_INTEGER,
+                                        ClassType.CONTRACT,
+                                        ClassType.BIG_INTEGER),
+                                nftLabStore,
+                                account(2),
+                                BigIntegerValue.of("1", ClassType.BIG_INTEGER));
+
+        StorageValue nftByIndex =
+                addInstanceMethodCallTransaction(
+                        creator_prv_key,
+                        creator,
+                        _10_000_000,
+                        panarea(1),
+                        classpath,
+                        new NonVoidMethodSignature(
+                                NFTLabStore,
+                                "tokenByIndex",
+                                new ClassType("io.nfteam.nftlab.nftlabmarketplace.NFTLab"),
+                                ClassType.BIG_INTEGER),
+                        nftLabStore,
+                        BigIntegerValue.of("1", ClassType.BIG_INTEGER));
+
+        StorageValue nftById =
+                addInstanceMethodCallTransaction(
+                        creator_prv_key,
+                        creator,
+                        _10_000_000,
+                        panarea(1),
+                        classpath,
+                        new NonVoidMethodSignature(
+                                NFTLabStore,
+                                "getNFTById",
+                                new ClassType("io.nfteam.nftlab.nftlabmarketplace.NFTLab"),
+                                ClassType.BIG_INTEGER),
+                        nftLabStore,
+                        tokenId);
+
+        assertEquals(nftById, nftByIndex);
+    }
 }

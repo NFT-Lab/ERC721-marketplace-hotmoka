@@ -2,6 +2,7 @@ package io.nfteam.nftlab.nftlabmarketplace;
 
 import io.takamaka.code.lang.PayableContract;
 import io.takamaka.code.lang.Storage;
+import io.takamaka.code.lang.View;
 import java.math.BigInteger;
 
 public class Trade extends Storage {
@@ -18,6 +19,7 @@ public class Trade extends Storage {
     }
 
     @Override
+    @View
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;

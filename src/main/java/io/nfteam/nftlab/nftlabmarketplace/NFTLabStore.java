@@ -9,16 +9,12 @@ import java.math.BigInteger;
 public class NFTLabStore extends ERC721URIStorage {
     private BigInteger tokenId = BigInteger.ONE;
 
-    private StorageMap<Contract, StorageMap<UnsignedBigInteger, UnsignedBigInteger>> _ownedTokens =
-            new StorageTreeMap<>();
-    private StorageMap<UnsignedBigInteger, UnsignedBigInteger> _ownedTokensIndex =
-            new StorageTreeMap<>();
-    private StorageMap<UnsignedBigInteger, UnsignedBigInteger> _allTokensIndex =
+    private StorageMap<Contract, StorageMap<BigInteger, BigInteger>> _ownedTokens =
             new StorageTreeMap<>();
 
-    private final StorageMap<UnsignedBigInteger, NFTLab> nfts = new StorageTreeMap<>();
-    private final StorageMap<String, UnsignedBigInteger> hashToId = new StorageTreeMap<>();
-    private final StorageMap<UnsignedBigInteger, StorageLinkedList<NFTTransaction>> history =
+    private final StorageMap<BigInteger, NFTLab> nfts = new StorageTreeMap<>();
+    private final StorageMap<String, BigInteger> hashToId = new StorageTreeMap<>();
+    private final StorageMap<BigInteger, StorageLinkedList<NFTTransaction>> history =
             new StorageTreeMap<>();
 
     @FromContract
@@ -41,11 +37,15 @@ public class NFTLabStore extends ERC721URIStorage {
         UnsignedBigInteger newTokenIdUBI = new UnsignedBigInteger(newTokenId);
 
         _safeMint(to, newTokenIdUBI);
+        StorageMap<BigInteger, BigInteger> owned =
+                _ownedTokens.getOrDefault(to, new StorageTreeMap<>());
+        owned.put(BigInteger.valueOf(owned.size() + 1), newTokenId);
+        _ownedTokens.put(to, owned);
         _setTokenURI(newTokenIdUBI, cid);
         _recordHistory(null, to, newTokenId);
 
-        nfts.put(newTokenIdUBI, new NFTLab(cid, metadataCid, isImage, isMusic, isVideo));
-        hashToId.put(cid, newTokenIdUBI);
+        nfts.put(newTokenId, new NFTLab(cid, metadataCid, isImage, isMusic, isVideo));
+        hashToId.put(cid, newTokenId);
 
         tokenId = tokenId.add(BigInteger.ONE);
 
@@ -70,14 +70,14 @@ public class NFTLabStore extends ERC721URIStorage {
         UnsignedBigInteger tokenIdUBI = new UnsignedBigInteger(tokenId);
         Takamaka.require(_exists(tokenIdUBI), "Unable to get the history of a non-existent NFT.");
 
-        return history.get(tokenIdUBI);
+        return history.get(tokenId);
     }
 
     @View
     public BigInteger getTokenId(String hash) {
         Takamaka.require(hashToId.get(hash) != null, "Unable to get the ID of a non-existent NFT.");
 
-        return hashToId.get(hash).toBigInteger();
+        return hashToId.get(hash);
     }
 
     @View
@@ -92,7 +92,7 @@ public class NFTLabStore extends ERC721URIStorage {
         UnsignedBigInteger tokenIdUBI = new UnsignedBigInteger(tokenId);
         Takamaka.require(_exists(tokenIdUBI), "Unable to get a non-existent NFT.");
 
-        return nfts.get(tokenIdUBI);
+        return nfts.get(tokenId);
     }
 
     @Override
@@ -100,26 +100,27 @@ public class NFTLabStore extends ERC721URIStorage {
         return "https://cloudflare-ipfs.com/ipfs/";
     }
 
-    public UnsignedBigInteger totalSupply() {
-        return UnsignedBigInteger.valueOf(nfts.size());
+    public BigInteger totalSupply() {
+        return BigInteger.valueOf(nfts.size());
     }
 
-    public UnsignedBigInteger tokenOfOwnerByIndex(Contract owner, UnsignedBigInteger index) {
+    public BigInteger tokenOfOwnerByIndex(Contract owner, BigInteger index) {
         return _ownedTokens
                 .getOrDefault(owner, new StorageTreeMap<>())
-                .getOrDefault(index, UnsignedBigInteger.valueOf(0));
+                .getOrDefault(index, BigInteger.valueOf(0));
     }
 
-    public NFTLab tokenByIndex(UnsignedBigInteger index) {
-        Takamaka.require(_exists(index), "Unable to get a non-existent NFT.");
+    public NFTLab tokenByIndex(BigInteger index) {
+        Takamaka.require(
+                _exists(new UnsignedBigInteger(index)), "Unable to get a non-existent NFT.");
         return nfts.get(index);
     }
 
     private void _recordHistory(Contract from, Contract to, BigInteger tokenID) {
         StorageLinkedList<NFTTransaction> historyOfToken =
-                history.getOrDefault(new UnsignedBigInteger(tokenID), new StorageLinkedList<>());
+                history.getOrDefault(tokenID, new StorageLinkedList<>());
         historyOfToken.add(new NFTTransaction(tokenID, from, to));
-        history.put(new UnsignedBigInteger(tokenID), historyOfToken);
+        history.put(tokenID, historyOfToken);
     }
 
     // Events
@@ -144,28 +145,6 @@ public class NFTLabStore extends ERC721URIStorage {
             this.isImage = isImage;
             this.isMusic = isMusic;
             this.isVideo = isVideo;
-        }
-    }
-
-    class Transferred extends Event {
-        public final BigInteger tokenId;
-        public final Contract seller;
-        public final Contract buyer;
-        public final String price;
-        public final String timestamp;
-
-        @FromContract
-        public Transferred(
-                BigInteger tokenId,
-                Contract seller,
-                Contract buyer,
-                String price,
-                String timestamp) {
-            this.tokenId = tokenId;
-            this.seller = seller;
-            this.buyer = buyer;
-            this.price = price;
-            this.timestamp = timestamp;
         }
     }
 }

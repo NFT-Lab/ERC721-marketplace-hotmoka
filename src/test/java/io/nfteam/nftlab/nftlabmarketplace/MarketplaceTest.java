@@ -7,13 +7,16 @@ import io.hotmoka.beans.CodeExecutionException;
 import io.hotmoka.beans.TransactionException;
 import io.hotmoka.beans.TransactionRejectedException;
 import io.hotmoka.beans.references.TransactionReference;
+import io.hotmoka.beans.signatures.CodeSignature;
 import io.hotmoka.beans.signatures.ConstructorSignature;
 import io.hotmoka.beans.signatures.NonVoidMethodSignature;
 import io.hotmoka.beans.signatures.VoidMethodSignature;
 import io.hotmoka.beans.types.BasicTypes;
 import io.hotmoka.beans.types.ClassType;
 import io.hotmoka.beans.values.*;
+import io.hotmoka.constants.Constants;
 import io.hotmoka.views.GasHelper;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.security.InvalidKeyException;
 import java.security.PrivateKey;
@@ -265,5 +268,532 @@ class MarketplaceTest extends TakamakaTest {
                                         ClassType.BIG_INTEGER),
                                 marketplace,
                                 openTrade));
+    }
+
+    /* EXECUTE TRADE TESTS */
+    @Test
+    void executeTrade_happyPath()
+            throws TransactionException, TransactionRejectedException, CodeExecutionException,
+                    SignatureException, InvalidKeyException {
+        StringValue cid = new StringValue("cid");
+        StringValue metadataCid = new StringValue("metadataCid");
+        BooleanValue isImage = new BooleanValue(true);
+        BooleanValue isMusic = new BooleanValue(true);
+        BooleanValue isVideo = new BooleanValue(true);
+
+        StorageValue mintedID =
+                addInstanceMethodCallTransaction(
+                        creator_prv_key,
+                        creator,
+                        _10_000_000,
+                        panarea(1),
+                        classpath,
+                        new NonVoidMethodSignature(
+                                NFTLabStore,
+                                "mint",
+                                ClassType.BIG_INTEGER,
+                                ClassType.CONTRACT,
+                                ClassType.STRING,
+                                ClassType.STRING,
+                                BasicTypes.BOOLEAN,
+                                BasicTypes.BOOLEAN,
+                                BasicTypes.BOOLEAN),
+                        store,
+                        creator,
+                        cid,
+                        metadataCid,
+                        isImage,
+                        isMusic,
+                        isVideo);
+
+        addInstanceMethodCallTransaction(
+                creator_prv_key,
+                creator,
+                _10_000_000,
+                panarea(1),
+                classpath,
+                new VoidMethodSignature(
+                        NFTLabStore, "approve", ClassType.CONTRACT, ClassType.BIG_INTEGER),
+                store,
+                marketplace,
+                mintedID);
+
+        StorageValue openTrade =
+                addInstanceMethodCallTransaction(
+                        creator_prv_key,
+                        creator,
+                        _10_000_000,
+                        panarea(1),
+                        classpath,
+                        new NonVoidMethodSignature(
+                                Marketplace,
+                                "openTrade",
+                                ClassType.BIG_INTEGER,
+                                ClassType.BIG_INTEGER,
+                                ClassType.BIG_INTEGER),
+                        marketplace,
+                        mintedID,
+                        new BigIntegerValue(panarea(1)));
+
+        BigInteger balanceBefore =
+                ((BigIntegerValue)
+                                runInstanceMethodCallTransaction(
+                                        account(2),
+                                        _50_000,
+                                        classpath,
+                                        CodeSignature.BALANCE,
+                                        account(2)))
+                        .value;
+
+        assertDoesNotThrow(
+                () ->
+                        addInstanceMethodCallTransaction(
+                                privateKey(2),
+                                account(2),
+                                _10_000_000,
+                                panarea(1),
+                                classpath,
+                                new VoidMethodSignature(
+                                        Marketplace,
+                                        "executeTrade",
+                                        ClassType.BIG_INTEGER,
+                                        ClassType.BIG_INTEGER),
+                                marketplace,
+                                new BigIntegerValue(panarea(2)),
+                                openTrade));
+
+        BigInteger balanceAfter =
+                ((BigIntegerValue)
+                                runInstanceMethodCallTransaction(
+                                        account(2),
+                                        _50_000,
+                                        classpath,
+                                        CodeSignature.BALANCE,
+                                        account(2)))
+                        .value;
+
+        assertTrue(balanceBefore.compareTo(balanceAfter) > 0);
+    }
+
+    @Test
+    void executeTrade_invalidAmount()
+            throws TransactionException, TransactionRejectedException, CodeExecutionException,
+                    SignatureException, InvalidKeyException {
+        StringValue cid = new StringValue("cid");
+        StringValue metadataCid = new StringValue("metadataCid");
+        BooleanValue isImage = new BooleanValue(true);
+        BooleanValue isMusic = new BooleanValue(true);
+        BooleanValue isVideo = new BooleanValue(true);
+
+        StorageValue mintedID =
+                addInstanceMethodCallTransaction(
+                        creator_prv_key,
+                        creator,
+                        _10_000_000,
+                        panarea(1),
+                        classpath,
+                        new NonVoidMethodSignature(
+                                NFTLabStore,
+                                "mint",
+                                ClassType.BIG_INTEGER,
+                                ClassType.CONTRACT,
+                                ClassType.STRING,
+                                ClassType.STRING,
+                                BasicTypes.BOOLEAN,
+                                BasicTypes.BOOLEAN,
+                                BasicTypes.BOOLEAN),
+                        store,
+                        creator,
+                        cid,
+                        metadataCid,
+                        isImage,
+                        isMusic,
+                        isVideo);
+
+        addInstanceMethodCallTransaction(
+                creator_prv_key,
+                creator,
+                _10_000_000,
+                panarea(1),
+                classpath,
+                new VoidMethodSignature(
+                        NFTLabStore, "approve", ClassType.CONTRACT, ClassType.BIG_INTEGER),
+                store,
+                marketplace,
+                mintedID);
+
+        StorageValue openTrade =
+                addInstanceMethodCallTransaction(
+                        creator_prv_key,
+                        creator,
+                        _10_000_000,
+                        panarea(1),
+                        classpath,
+                        new NonVoidMethodSignature(
+                                Marketplace,
+                                "openTrade",
+                                ClassType.BIG_INTEGER,
+                                ClassType.BIG_INTEGER,
+                                ClassType.BIG_INTEGER),
+                        marketplace,
+                        mintedID,
+                        new BigIntegerValue(panarea(3)));
+
+        BigInteger balanceBefore =
+                ((BigIntegerValue)
+                                runInstanceMethodCallTransaction(
+                                        account(2),
+                                        _50_000,
+                                        classpath,
+                                        CodeSignature.BALANCE,
+                                        account(2)))
+                        .value;
+
+        throwsTransactionExceptionWithCause(
+                Constants.REQUIREMENT_VIOLATION_EXCEPTION_NAME,
+                () ->
+                        addInstanceMethodCallTransaction(
+                                privateKey(2),
+                                account(2),
+                                _10_000_000,
+                                panarea(1),
+                                classpath,
+                                new VoidMethodSignature(
+                                        Marketplace,
+                                        "executeTrade",
+                                        ClassType.BIG_INTEGER,
+                                        ClassType.BIG_INTEGER),
+                                marketplace,
+                                new BigIntegerValue(panarea(1)),
+                                openTrade));
+
+        BigInteger balanceAfter =
+                ((BigIntegerValue)
+                                runInstanceMethodCallTransaction(
+                                        account(2),
+                                        _50_000,
+                                        classpath,
+                                        CodeSignature.BALANCE,
+                                        account(2)))
+                        .value;
+
+        assertEquals(1, balanceBefore.compareTo(balanceAfter));
+    }
+
+    @Test
+    void executeTrade_executingAClosetrade()
+            throws TransactionException, TransactionRejectedException, CodeExecutionException,
+                    SignatureException, InvalidKeyException {
+        StringValue cid = new StringValue("cid");
+        StringValue metadataCid = new StringValue("metadataCid");
+        BooleanValue isImage = new BooleanValue(true);
+        BooleanValue isMusic = new BooleanValue(true);
+        BooleanValue isVideo = new BooleanValue(true);
+
+        StorageValue mintedID =
+                addInstanceMethodCallTransaction(
+                        creator_prv_key,
+                        creator,
+                        _10_000_000,
+                        panarea(1),
+                        classpath,
+                        new NonVoidMethodSignature(
+                                NFTLabStore,
+                                "mint",
+                                ClassType.BIG_INTEGER,
+                                ClassType.CONTRACT,
+                                ClassType.STRING,
+                                ClassType.STRING,
+                                BasicTypes.BOOLEAN,
+                                BasicTypes.BOOLEAN,
+                                BasicTypes.BOOLEAN),
+                        store,
+                        creator,
+                        cid,
+                        metadataCid,
+                        isImage,
+                        isMusic,
+                        isVideo);
+
+        addInstanceMethodCallTransaction(
+                creator_prv_key,
+                creator,
+                _10_000_000,
+                panarea(1),
+                classpath,
+                new VoidMethodSignature(
+                        NFTLabStore, "approve", ClassType.CONTRACT, ClassType.BIG_INTEGER),
+                store,
+                marketplace,
+                mintedID);
+
+        StorageValue openTrade =
+                addInstanceMethodCallTransaction(
+                        creator_prv_key,
+                        creator,
+                        _10_000_000,
+                        panarea(1),
+                        classpath,
+                        new NonVoidMethodSignature(
+                                Marketplace,
+                                "openTrade",
+                                ClassType.BIG_INTEGER,
+                                ClassType.BIG_INTEGER,
+                                ClassType.BIG_INTEGER),
+                        marketplace,
+                        mintedID,
+                        new BigIntegerValue(panarea(3)));
+
+        addInstanceMethodCallTransaction(
+                creator_prv_key,
+                creator,
+                _10_000_000,
+                panarea(1),
+                classpath,
+                new VoidMethodSignature(Marketplace, "cancelTrade", ClassType.BIG_INTEGER),
+                marketplace,
+                mintedID);
+
+        BigInteger balanceBefore =
+                ((BigIntegerValue)
+                                runInstanceMethodCallTransaction(
+                                        account(2),
+                                        _50_000,
+                                        classpath,
+                                        CodeSignature.BALANCE,
+                                        account(2)))
+                        .value;
+
+        throwsTransactionExceptionWithCause(
+                Constants.REQUIREMENT_VIOLATION_EXCEPTION_NAME,
+                () ->
+                        addInstanceMethodCallTransaction(
+                                privateKey(2),
+                                account(2),
+                                _10_000_000,
+                                panarea(1),
+                                classpath,
+                                new VoidMethodSignature(
+                                        Marketplace,
+                                        "executeTrade",
+                                        ClassType.BIG_INTEGER,
+                                        ClassType.BIG_INTEGER),
+                                marketplace,
+                                new BigIntegerValue(panarea(10)),
+                                openTrade));
+
+        BigInteger balanceAfter =
+                ((BigIntegerValue)
+                                runInstanceMethodCallTransaction(
+                                        account(2),
+                                        _50_000,
+                                        classpath,
+                                        CodeSignature.BALANCE,
+                                        account(2)))
+                        .value;
+
+        // the caller should have payed for the transaction anyway
+        assertEquals(1, balanceBefore.compareTo(balanceAfter));
+    }
+
+    /* CANCEL TRADE TESTS */
+    @Test
+    void cancelTrade_happyPath()
+            throws TransactionException, TransactionRejectedException, CodeExecutionException,
+                    SignatureException, InvalidKeyException {
+        StringValue cid = new StringValue("cid");
+        StringValue metadataCid = new StringValue("metadataCid");
+        BooleanValue isImage = new BooleanValue(true);
+        BooleanValue isMusic = new BooleanValue(true);
+        BooleanValue isVideo = new BooleanValue(true);
+
+        StorageValue mintedID =
+                addInstanceMethodCallTransaction(
+                        creator_prv_key,
+                        creator,
+                        _10_000_000,
+                        panarea(1),
+                        classpath,
+                        new NonVoidMethodSignature(
+                                NFTLabStore,
+                                "mint",
+                                ClassType.BIG_INTEGER,
+                                ClassType.CONTRACT,
+                                ClassType.STRING,
+                                ClassType.STRING,
+                                BasicTypes.BOOLEAN,
+                                BasicTypes.BOOLEAN,
+                                BasicTypes.BOOLEAN),
+                        store,
+                        creator,
+                        cid,
+                        metadataCid,
+                        isImage,
+                        isMusic,
+                        isVideo);
+
+        addInstanceMethodCallTransaction(
+                creator_prv_key,
+                creator,
+                _10_000_000,
+                panarea(1),
+                classpath,
+                new VoidMethodSignature(
+                        NFTLabStore, "approve", ClassType.CONTRACT, ClassType.BIG_INTEGER),
+                store,
+                marketplace,
+                mintedID);
+
+        StorageValue openTrade =
+                addInstanceMethodCallTransaction(
+                        creator_prv_key,
+                        creator,
+                        _10_000_000,
+                        panarea(1),
+                        classpath,
+                        new NonVoidMethodSignature(
+                                Marketplace,
+                                "openTrade",
+                                ClassType.BIG_INTEGER,
+                                ClassType.BIG_INTEGER,
+                                ClassType.BIG_INTEGER),
+                        marketplace,
+                        mintedID,
+                        new BigIntegerValue(panarea(3)));
+
+        addInstanceMethodCallTransaction(
+                creator_prv_key,
+                creator,
+                _10_000_000,
+                panarea(1),
+                classpath,
+                new VoidMethodSignature(Marketplace, "cancelTrade", ClassType.BIG_INTEGER),
+                marketplace,
+                mintedID);
+
+        assertEquals(
+                NullValue.class,
+                addInstanceMethodCallTransaction(
+                                privateKey(2),
+                                account(2),
+                                _10_000_000,
+                                panarea(1),
+                                classpath,
+                                new NonVoidMethodSignature(
+                                        Marketplace,
+                                        "getTradeOfNFT",
+                                        ClassType.BIG_INTEGER,
+                                        ClassType.BIG_INTEGER),
+                                marketplace,
+                                mintedID)
+                        .getClass());
+    }
+
+    /* getTradesOfAddress TESTS */
+    @Test
+    void getTradesOfAddress_keepsListOfTrades()
+            throws TransactionException, TransactionRejectedException, CodeExecutionException,
+                    SignatureException, InvalidKeyException {
+        StringValue cid = new StringValue("cid");
+        StringValue metadataCid = new StringValue("metadataCid");
+        BooleanValue isImage = new BooleanValue(true);
+        BooleanValue isMusic = new BooleanValue(true);
+        BooleanValue isVideo = new BooleanValue(true);
+
+        StorageValue mintedID =
+                addInstanceMethodCallTransaction(
+                        creator_prv_key,
+                        creator,
+                        _10_000_000,
+                        panarea(1),
+                        classpath,
+                        new NonVoidMethodSignature(
+                                NFTLabStore,
+                                "mint",
+                                ClassType.BIG_INTEGER,
+                                ClassType.CONTRACT,
+                                ClassType.STRING,
+                                ClassType.STRING,
+                                BasicTypes.BOOLEAN,
+                                BasicTypes.BOOLEAN,
+                                BasicTypes.BOOLEAN),
+                        store,
+                        creator,
+                        cid,
+                        metadataCid,
+                        isImage,
+                        isMusic,
+                        isVideo);
+
+        addInstanceMethodCallTransaction(
+                creator_prv_key,
+                creator,
+                _10_000_000,
+                panarea(1),
+                classpath,
+                new VoidMethodSignature(
+                        NFTLabStore, "approve", ClassType.CONTRACT, ClassType.BIG_INTEGER),
+                store,
+                marketplace,
+                mintedID);
+
+        StorageValue openTrade =
+                addInstanceMethodCallTransaction(
+                        creator_prv_key,
+                        creator,
+                        _10_000_000,
+                        panarea(1),
+                        classpath,
+                        new NonVoidMethodSignature(
+                                Marketplace,
+                                "openTrade",
+                                ClassType.BIG_INTEGER,
+                                ClassType.BIG_INTEGER,
+                                ClassType.BIG_INTEGER),
+                        marketplace,
+                        mintedID,
+                        new BigIntegerValue(panarea(3)));
+
+        StorageValue tradesBefore =
+                addInstanceMethodCallTransaction(
+                        creator_prv_key,
+                        creator,
+                        _10_000_000,
+                        panarea(1),
+                        classpath,
+                        new NonVoidMethodSignature(
+                                Marketplace,
+                                "getTradesOfAddress",
+                                ClassType.STORAGE_LIST,
+                                ClassType.CONTRACT),
+                        marketplace,
+                        creator);
+
+        addInstanceMethodCallTransaction(
+                creator_prv_key,
+                creator,
+                _10_000_000,
+                panarea(1),
+                classpath,
+                new VoidMethodSignature(Marketplace, "cancelTrade", ClassType.BIG_INTEGER),
+                marketplace,
+                mintedID);
+
+        StorageValue tradesAfter =
+                addInstanceMethodCallTransaction(
+                        creator_prv_key,
+                        creator,
+                        _10_000_000,
+                        panarea(1),
+                        classpath,
+                        new NonVoidMethodSignature(
+                                Marketplace,
+                                "getTradesOfAddress",
+                                ClassType.STORAGE_LIST,
+                                ClassType.CONTRACT),
+                        marketplace,
+                        creator);
+
+        assertEquals(0, tradesBefore.compareTo(tradesAfter));
     }
 }

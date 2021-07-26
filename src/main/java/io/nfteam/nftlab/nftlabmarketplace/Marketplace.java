@@ -1,7 +1,6 @@
 package io.nfteam.nftlab.nftlabmarketplace;
 
 import io.takamaka.code.lang.*;
-import io.takamaka.code.math.UnsignedBigInteger;
 import io.takamaka.code.util.*;
 import java.math.BigInteger;
 
@@ -10,7 +9,7 @@ public class Marketplace extends Contract {
     private final NFTLabStore store;
 
     private final StorageMap<BigInteger, Trade> trades = new StorageTreeMap<>();
-    private final StorageMap<Contract, StorageLinkedList<Trade>> _addressToTrades =
+    private final StorageMap<Contract, StorageLinkedList<BigInteger>> _addressToTrades =
             new StorageTreeMap<>();
     private final StorageMap<BigInteger, BigInteger> nftToActiveTrade = new StorageTreeMap<>();
 
@@ -27,9 +26,9 @@ public class Marketplace extends Contract {
         this.store.safeTransferFrom(caller(), this, item);
         Trade newTrade = new Trade((PayableContract) caller(), item, price, Status.OPEN);
         trades.putIfAbsent(counter, newTrade);
-        StorageLinkedList<Trade> trades =
+        StorageLinkedList<BigInteger> trades =
                 _addressToTrades.getOrDefault(caller(), new StorageLinkedList<>());
-        trades.add(newTrade);
+        trades.add(counter);
         _addressToTrades.put(caller(), trades);
         nftToActiveTrade.put(item, counter);
         tradeCounter = tradeCounter.add(BigInteger.ONE);
@@ -46,8 +45,8 @@ public class Marketplace extends Contract {
                 "You should at least pay the price of the token to get it");
         Takamaka.require(trade.status.equals(Status.OPEN), "Trade is not open to execution");
         trade.poster.receive(trade.price);
-        nftToActiveTrade.remove(trade.item);
         this.store.safeTransferFrom(this, caller(), trade.item);
+        nftToActiveTrade.remove(trade.item);
         trade.status = Status.EXECUTED;
         trades.put(tradeID, trade);
         Takamaka.event(new TradeStatusChange(trade.item, Status.EXECUTED));
@@ -65,23 +64,27 @@ public class Marketplace extends Contract {
         Takamaka.event(new TradeStatusChange(trade.item, Status.CANCELLED));
     }
 
+    @View
     public Contract getStorage() {
         return this.store;
     }
 
-    public BigInteger getTradeOfNFT(UnsignedBigInteger tokenID) {
+    @View
+    public BigInteger getTradeOfNFT(BigInteger tokenID) {
         return nftToActiveTrade.get(tokenID);
     }
 
-    public StorageList<Trade> getTradesOfAddress(Contract address) {
+    @View
+    public StorageListView<BigInteger> getTradesOfAddress(Contract address) {
         return _addressToTrades.get(address);
     }
 
+    @View
     public Trade getTrade(BigInteger tradeID) {
         return trades.get(tradeID);
     }
 
-    public class TradeStatusChange extends Event {
+    public static class TradeStatusChange extends Event {
         private final BigInteger item;
         private final Status status;
 

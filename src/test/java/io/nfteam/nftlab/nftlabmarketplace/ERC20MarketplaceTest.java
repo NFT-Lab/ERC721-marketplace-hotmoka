@@ -340,22 +340,6 @@ class ERC20MarketplaceTest extends TakamakaTest {
                         mintedID,
                         new BigIntegerValue(panarea(1)));
 
-        StorageReference balanceBefore =
-                (StorageReference)
-                        addInstanceMethodCallTransaction(
-                                creator_prv_key,
-                                creator,
-                                _10_000_000,
-                                panarea(1),
-                                classpath,
-                                new NonVoidMethodSignature(
-                                        ERC20,
-                                        "balanceOf",
-                                        ClassType.UNSIGNED_BIG_INTEGER,
-                                        ClassType.CONTRACT),
-                                erc20,
-                                creator);
-
         addInstanceMethodCallTransaction(
                 privateKey(2),
                 account(2),
@@ -384,24 +368,6 @@ class ERC20MarketplaceTest extends TakamakaTest {
                                         Marketplace, "executeTrade", ClassType.BIG_INTEGER),
                                 marketplace,
                                 openTrade));
-
-        StorageReference balanceAfter =
-                (StorageReference)
-                        addInstanceMethodCallTransaction(
-                                creator_prv_key,
-                                creator,
-                                _10_000_000,
-                                panarea(1),
-                                classpath,
-                                new NonVoidMethodSignature(
-                                        ERC20,
-                                        "balanceOf",
-                                        ClassType.UNSIGNED_BIG_INTEGER,
-                                        ClassType.CONTRACT),
-                                erc20,
-                                creator);
-
-        assertTrue(balanceAfter.compareTo(balanceBefore) > 0);
     }
 
     @Test

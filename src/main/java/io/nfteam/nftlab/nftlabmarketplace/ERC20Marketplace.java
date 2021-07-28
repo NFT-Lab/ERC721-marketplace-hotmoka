@@ -1,12 +1,18 @@
 package io.nfteam.nftlab.nftlabmarketplace;
 
 import io.takamaka.code.lang.*;
-import io.takamaka.code.util.*;
+import io.takamaka.code.math.UnsignedBigInteger;
+import io.takamaka.code.tokens.IERC20;
+import io.takamaka.code.util.StorageLinkedList;
+import io.takamaka.code.util.StorageListView;
+import io.takamaka.code.util.StorageMap;
+import io.takamaka.code.util.StorageTreeMap;
 import java.math.BigInteger;
 
-public class Marketplace extends Contract {
+public class ERC20Marketplace extends Contract {
 
     private final NFTLabStore store;
+    private final IERC20 tokenHandler;
 
     private final StorageMap<BigInteger, Trade> trades = new StorageTreeMap<>();
     private final StorageMap<Contract, StorageLinkedList<BigInteger>> _addressToTrades =
@@ -16,8 +22,9 @@ public class Marketplace extends Contract {
     private BigInteger tradeCounter = BigInteger.ONE;
 
     @FromContract
-    public Marketplace(String _name, String _symbol) {
+    public ERC20Marketplace(IERC20 tokenHandler, String _name, String _symbol) {
         this.store = new NFTLabStore(_name, _symbol);
+        this.tokenHandler = tokenHandler;
     }
 
     @FromContract
@@ -40,14 +47,20 @@ public class Marketplace extends Contract {
     }
 
     @FromContract
-    @Payable
-    public void executeTrade(BigInteger amount, BigInteger tradeID) {
+    public void executeTrade(BigInteger tradeID) {
         Trade trade = trades.get(tradeID);
-        Takamaka.require(
-                amount.compareTo(trade.price) >= 0,
-                "You should at least pay the price of the token to get it");
         Takamaka.require(trade.status.equals(Status.OPEN), "Trade is not open to execution");
-        trade.poster.receive(trade.price);
+        Takamaka.require(
+                tokenHandler
+                                .allowance(caller(), this)
+                                .compareTo(new UnsignedBigInteger(trade.price))
+                        >= 0,
+                "You should allow at least the price of the token to get it, current allowance "
+                        + tokenHandler.allowance(caller(), this));
+        Takamaka.require(
+                tokenHandler.transferFrom(
+                        caller(), trade.poster, new UnsignedBigInteger(trade.price)),
+                "Failed payment of the token");
         this.store.safeTransferFrom(this, caller(), trade.item);
         nftToActiveTrade.remove(trade.item);
         trade.status = Status.EXECUTED;

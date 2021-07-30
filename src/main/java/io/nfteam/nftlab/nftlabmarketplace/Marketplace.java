@@ -43,16 +43,25 @@ public class Marketplace extends Contract {
     @Payable
     public void executeTrade(BigInteger amount, BigInteger tradeID) {
         Trade trade = trades.get(tradeID);
-        Takamaka.require(
-                amount.compareTo(trade.price) >= 0,
-                "You should at least pay the price of the token to get it");
         Takamaka.require(trade.status.equals(Status.OPEN), "Trade is not open to execution");
-        trade.poster.receive(trade.price);
+        _checkPayment(caller(), amount, trade.price);
+        Takamaka.require(_pay(caller(), trade.poster, trade.price), "Failed to pay the artist");
         this.store.safeTransferFrom(this, caller(), trade.item);
         nftToActiveTrade.remove(trade.item);
         trade.status = Status.EXECUTED;
         trades.put(tradeID, trade);
         Takamaka.event(new TradeStatusChange(trade.item, Status.EXECUTED));
+    }
+
+    protected boolean _pay(Contract from, PayableContract to, BigInteger amount) {
+        to.receive(amount);
+        return true;
+    }
+
+    protected void _checkPayment(Contract from, BigInteger amount, BigInteger price) {
+        Takamaka.require(
+                amount.compareTo(price) >= 0,
+                "You should at least pay the price of the token to get it");
     }
 
     @FromContract

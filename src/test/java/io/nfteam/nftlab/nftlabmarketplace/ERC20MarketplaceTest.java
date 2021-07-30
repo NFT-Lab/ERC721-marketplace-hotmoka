@@ -365,8 +365,12 @@ class ERC20MarketplaceTest extends TakamakaTest {
                                 panarea(1),
                                 classpath,
                                 new VoidMethodSignature(
-                                        Marketplace, "executeTrade", ClassType.BIG_INTEGER),
+                                        Marketplace,
+                                        "executeTrade",
+                                        ClassType.BIG_INTEGER,
+                                        ClassType.BIG_INTEGER),
                                 marketplace,
+                                new BigIntegerValue(BigInteger.TEN),
                                 openTrade));
     }
 
@@ -480,8 +484,12 @@ class ERC20MarketplaceTest extends TakamakaTest {
                                 panarea(1),
                                 classpath,
                                 new VoidMethodSignature(
-                                        Marketplace, "executeTrade", ClassType.BIG_INTEGER),
+                                        Marketplace,
+                                        "executeTrade",
+                                        ClassType.BIG_INTEGER,
+                                        ClassType.BIG_INTEGER),
                                 marketplace,
+                                new BigIntegerValue(BigInteger.TEN),
                                 openTrade));
 
         BigInteger balanceAfter =
@@ -591,8 +599,12 @@ class ERC20MarketplaceTest extends TakamakaTest {
                                 panarea(1),
                                 classpath,
                                 new VoidMethodSignature(
-                                        Marketplace, "executeTrade", ClassType.BIG_INTEGER),
+                                        Marketplace,
+                                        "executeTrade",
+                                        ClassType.BIG_INTEGER,
+                                        ClassType.BIG_INTEGER),
                                 marketplace,
+                                new BigIntegerValue(BigInteger.TEN),
                                 openTrade));
 
         BigInteger balanceAfter =
